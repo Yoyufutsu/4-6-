@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRIME HAND — 最大素数チャレンジ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --table:#171210;
+    --table-2:#221a16;
+    --panel:#241d19;
+    --panel-line:#3a2e27;
+    --ivory:#f4eede;
+    --ivory-2:#e7ddc7;
+    --ink:#241c15;
+    --red:#b3122b;
+    --gold:#cda349;
+    --gold-dim:#8f7433;
+    --muted:#a9998a;
+    --text:#efe6d6;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+    --serif:"Fraunces",Georgia,"Times New Roman",serif;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"Space Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    color:var(--text);
+    background:
+      radial-gradient(120% 90% at 50% -10%, #2b211b 0%, var(--table) 55%, #100c0a 100%);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:28px 20px 64px}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--gold);margin:0 0 10px
+  }
+  h1{
+    font-family:var(--serif);font-weight:600;letter-spacing:-.01em;
+    font-size:clamp(30px,7vw,46px);line-height:1.02;margin:0 0 8px
+  }
+  h1 .sub{display:block;font-family:var(--sans);font-weight:500;font-size:14px;letter-spacing:.02em;color:var(--muted);margin-top:12px}
+  .lead{color:var(--muted);font-size:15px;max-width:52ch}
+  .panel{
+    background:linear-gradient(180deg,var(--panel),#1f1815);
+    border:1px solid var(--panel-line);border-radius:16px;
+    padding:22px;box-shadow:var(--shadow);margin-top:22px
+  }
+  .rules{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:9px}
+  .rules li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--text)}
+  .rules li::before{content:"";flex:0 0 6px;height:6px;border-radius:50%;background:var(--gold);margin-top:8px}
+  .rules b{color:var(--gold);font-weight:600}
+  code.tag{font-family:var(--mono);background:#2c231d;border:1px solid var(--panel-line);color:var(--ivory-2);padding:1px 6px;border-radius:5px;font-size:12px}
+
+  /* ---- face card picker ---- */
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .pick-row{display:flex;gap:10px;flex-wrap:wrap}
+  .picker{display:flex;gap:12px;margin:4px 0 6px}
+  .fc-btn{
+    font-family:var(--serif);font-weight:600;font-size:22px;
+    width:60px;height:82px;border-radius:11px;cursor:pointer;
+    background:var(--ivory);color:var(--ink);
+    border:1px solid #cdbf9f;box-shadow:0 4px 12px rgba(0,0,0,.3);
+    transition:transform .12s ease, box-shadow .12s ease;
+    position:relative
+  }
+  .fc-btn:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(0,0,0,.4)}
+  .fc-btn:active{transform:translateY(-1px)}
+  .fc-btn .pip{position:absolute;top:6px;left:8px;font-size:11px;color:var(--red)}
+  .field{
+    display:flex;align-items:center;gap:12px;margin-top:6px
+  }
+  #fcInput{
+    font-family:var(--mono);font-size:24px;letter-spacing:.35em;text-align:center;
+    width:130px;padding:12px 8px 12px 18px;border-radius:10px;
+    background:#1b1512;border:1px solid var(--panel-line);color:var(--ivory);
+    text-transform:uppercase;outline:none
+  }
+  #fcInput:focus{border-color:var(--gold)}
+  .hint{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .btn{
+    font-family:var(--sans);font-weight:600;font-size:15px;cursor:pointer;
+    padding:13px 22px;border-radius:11px;border:1px solid transparent;transition:.14s
+  }
+  .btn-primary{background:var(--gold);color:#241c0c;border-color:#e2bd63}
+  .btn-primary:hover{background:#dcb559}
+  .btn-primary:disabled{background:#4a4234;color:#8a8170;cursor:not-allowed;border-color:#4a4234}
+  .btn-ghost{background:transparent;color:var(--text);border-color:var(--panel-line)}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+  .btn-red{background:transparent;color:#e78a97;border-color:#5a2b31}
+  .btn-red:hover{border-color:var(--red);color:#f0a6b0}
+  .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;align-items:center}
+
+  /* ---- game top bar ---- */
+  .topbar{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .round-no{font-family:var(--serif);font-size:24px;font-weight:600}
+  .round-no small{font-family:var(--sans);font-size:13px;color:var(--muted);font-weight:500}
+  .score{font-family:var(--mono);font-size:13px;color:var(--gold);letter-spacing:.05em}
+  .progress{height:4px;background:#2a211b;border-radius:3px;overflow:hidden;margin:10px 0 4px}
+  .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));width:0;transition:width .4s ease}
+
+  .prompt{font-size:14px;color:var(--muted);margin:20px 0 12px}
+  .prompt b{color:var(--text);font-weight:600}
+
+  /* ---- cards ---- */
+  .hand{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .card{
+    --c:var(--ink);
+    position:relative;width:70px;height:98px;border-radius:11px;
+    background:linear-gradient(160deg,#fbf7ec,var(--ivory-2));
+    border:1px solid #cdbf9f;box-shadow:0 5px 14px rgba(0,0,0,.4);
+    color:var(--c);cursor:pointer;user-select:none;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 10px 20px rgba(0,0,0,.45)}
+  .card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .card.red{--c:var(--red)}
+  .card .rank{position:absolute;top:7px;left:9px;font-family:var(--serif);font-weight:600;font-size:19px;line-height:1}
+  .card .rank.br{top:auto;left:auto;bottom:7px;right:9px;transform:rotate(180deg)}
+  .card .center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;opacity:.9}
+  .card .keycap{
+    position:absolute;top:6px;right:6px;font-family:var(--mono);font-size:10px;line-height:1;
+    color:#8a7860;background:#efe6d0;border:1px solid #d4c7a6;border-radius:4px;
+    padding:2px 4px;box-shadow:0 1px 0 #c9ba95
+  }
+  .keyhelp{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;margin:16px 0 0;letter-spacing:.02em}
+  .keyhelp kbd{background:#2c231d;border:1px solid var(--panel-line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--ivory-2);font-size:11px;margin:0 1px}
+  .card.used{opacity:.28;pointer-events:none;transform:none}
+  .card.static{cursor:default}
+  .card.static:hover{transform:none;box-shadow:0 5px 14px rgba(0,0,0,.4)}
+
+  /* ---- arrangement builder ---- */
+  .builder{margin-top:8px}
+  .slots{
+    display:flex;gap:10px;justify-content:center;min-height:104px;align-items:center;
+    padding:12px;border:1px dashed var(--panel-line);border-radius:14px;background:#1b1512
+  }
+  .slot-empty{
+    width:70px;height:98px;border-radius:11px;border:1px dashed #4a3c33;
+    display:flex;align-items:center;justify-content:center;color:#5c4d41;font-size:22px;font-family:var(--serif)
+  }
+  .readout{
+    text-align:center;font-family:var(--mono);margin:16px 0 2px;
+    font-size:22px;color:var(--ivory);letter-spacing:.04em;min-height:30px
+  }
+  .readout .eq{color:var(--muted);font-size:15px;margin-right:6px}
+  .readout.empty{color:#5c4d41}
+
+  /* ---- feedback ---- */
+  .feedback{margin-top:18px;padding:18px;border-radius:14px;text-align:center;display:none}
+  .feedback.show{display:block;animation:pop .28s ease}
+  @keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+  .feedback.correct{background:linear-gradient(180deg,#2a2410,#211c0c);border:1px solid var(--gold-dim)}
+  .feedback.wrong{background:linear-gradient(180deg,#2a1418,#211012);border:1px solid #5a2b31}
+  .verdict{font-family:var(--serif);font-size:26px;font-weight:600;margin:0}
+  .verdict.correct{color:var(--gold)}
+  .verdict.wrong{color:#e78a97}
+  .reveal{font-size:14px;color:var(--muted);margin-top:8px}
+  .reveal .val{font-family:var(--mono);color:var(--ivory);font-size:15px}
+
+  /* ---- results ---- */
+  .result-big{font-family:var(--serif);font-size:clamp(56px,18vw,110px);font-weight:600;line-height:1;color:var(--gold);text-align:center;margin:10px 0}
+  .result-big small{font-size:.36em;color:var(--muted)}
+  .result-line{text-align:center;color:var(--muted);font-size:15px}
+  .grade{text-align:center;font-family:var(--mono);letter-spacing:.15em;color:var(--ivory);margin-top:14px}
+
+  .hidden{display:none}
+  footer{margin-top:34px;text-align:center;color:#6b5c4f;font-size:12px;font-family:var(--mono);letter-spacing:.08em}
+  @media (max-width:480px){
+    .card,.slot-empty{width:60px;height:84px}
+    .card .rank{font-size:16px}
+    .fc-btn{width:52px;height:72px;font-size:19px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ SETUP ============ -->
+  <section id="setup">
+    <p class="eyebrow">Miller–Rabin · 素数大富豪</p>
+    <h1>PRIME HAND
+      <span class="sub">配られた4枚を並べ替えて、作れる<b style="color:var(--gold)">最大の素数</b>を当てる全20ラウンドの一本勝負。</span>
+    </h1>
+
+    <div class="panel">
+      <ul class="rules">
+        <li>まず手札に固定する<b>絵札を2枚</b>選ぶ（同じ札の重複も可）。</li>
+        <li>毎ラウンド<b>数札が2枚</b>配られ、合計4枚になる。</li>
+        <li>4枚すべてを並べ替えて作れる中で<b>最大の素数</b>を組み立てる。</li>
+        <li>札の値は <code class="tag">T=10</code> <code class="tag">J=11</code> <code class="tag">Q=12</code> <code class="tag">K=13</code>。並べた札はそのまま連結（例: K→13, 9 なら「139」）。</li>
+        <li>素数が1つも作れないときは <b>「素数なし」</b> が正解。</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <p class="label">絵札を2枚 選ぶ</p>
+      <div class="picker" id="picker"></div>
+      <div class="field">
+        <input id="fcInput" maxlength="2" inputmode="text" autocomplete="off"
+               spellcheck="false" placeholder="––" aria-label="絵札2文字（T J Q K）">
+        <span class="hint">T / J / Q / K の2文字</span>
+      </div>
+      <p class="keyhelp" style="text-align:left;margin:12px 0 0">
+        <kbd>T</kbd><kbd>J</kbd><kbd>Q</kbd><kbd>K</kbd> キーで選択 · <kbd>⌫</kbd> 消す · <kbd>Enter</kbd> 開始
+      </p>
+      <div class="actions">
+        <button class="btn btn-primary" id="startBtn" disabled>ゲーム開始 →</button>
+        <button class="btn btn-ghost" id="clearFc">クリア</button>
+      </div>
+    </div>
+    <footer>4枚 → 24通りの並べを Miller–Rabin 判定 / N &lt; 4,759,123,141 は決定的</footer>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="game" class="hidden">
+    <div class="topbar">
+      <div class="round-no"><span id="rNow">1</span><small> / 20 ラウンド</small></div>
+      <div class="score">SCORE <span id="scoreNow">0</span></div>
+    </div>
+    <div class="progress"><i id="progFill"></i></div>
+
+    <p class="prompt">手札 <b id="handLabel"></b> — 最大の素数を組み立てよう。</p>
+    <div class="hand" id="handRow"></div>
+
+    <div class="builder">
+      <p class="label" style="margin-top:22px">上の札をタップ、または対応するキーで左から並べる</p>
+      <div class="slots" id="slots"></div>
+      <div class="readout empty" id="readout">札を並べてください</div>
+      <div class="actions" style="justify-content:center">
+        <button class="btn btn-primary" id="submitBtn" disabled>これで確定</button>
+        <button class="btn btn-ghost" id="undoBtn">1つ戻す</button>
+        <button class="btn btn-ghost" id="resetBtn">やり直し</button>
+        <button class="btn btn-red" id="noneBtn">素数なし</button>
+      </div>
+      <p class="keyhelp">
+        <kbd>1</kbd>–<kbd>9</kbd> <kbd>T</kbd><kbd>J</kbd><kbd>Q</kbd><kbd>K</kbd> 配置 ·
+        <kbd>⌫</kbd> 戻す · <kbd>Esc</kbd> やり直し · <kbd>Enter</kbd> 確定 · <kbd>0</kbd> 素数なし
+      </p>
+    </div>
+
+    <div class="feedback" id="feedback">
+      <p class="verdict" id="verdict"></p>
+      <p class="reveal" id="reveal"></p>
+      <div class="actions" style="justify-content:center;margin-top:14px">
+        <button class="btn btn-primary" id="nextBtn">次のラウンド →</button>
+      </div>
+    </div>
+    <footer id="gameFoot">絵札: <span id="footFc"></span></footer>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="results" class="hidden">
+    <p class="eyebrow" style="text-align:center">FINAL RESULT</p>
+    <div class="result-big"><span id="finalScore">0</span><small> / 20</small></div>
+    <p class="result-line">結果は <b style="color:var(--ivory)"><span id="finalScore2">0</span> / 20</b> でした。</p>
+    <p class="grade" id="grade"></p>
+    <div class="panel">
+      <div class="actions" style="justify-content:center">
+        <button class="btn btn-primary" id="againSame">同じ絵札でもう一度</button>
+        <button class="btn btn-ghost" id="againNew">絵札を選び直す</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ---------- number theory ---------- */
+function modpow(base, exp, mod){
+  base %= mod; let r = 1;
+  while(exp > 0){
+    if(exp & 1) r = (r * base) % mod;
+    base = (base * base) % mod;
+    exp = Math.floor(exp / 2);
+  }
+  return r;
+}
+function isPrime(n){                       // deterministic for n < 3.2e9
+  if(n < 2) return false;
+  if(n % 2 === 0) return n === 2;
+  if(n % 3 === 0) return n === 3;
+  let d = n - 1, s = 0;
+  while(d % 2 === 0){ d = Math.floor(d/2); s++; }
+  for(const a of [2, 7, 61]){
+    if(a % n === 0) continue;
+    let x = modpow(a, d, n);
+    if(x === 1 || x === n - 1) continue;
+    let composite = true;
+    for(let i = 0; i < s - 1; i++){
+      x = (x * x) % n;
+      if(x === n - 1){ composite = false; break; }
+    }
+    if(composite) return false;
+  }
+  return true;
+}
+
+/* ---------- card helpers ---------- */
+const FACES = ["T","J","Q","K"];
+const DIGIT = {T:"10", J:"11", Q:"12", K:"13"};   // digit-sum: T=1,J=2,Q=3,K=4
+const toDigits = c => DIGIT[c] || c;
+const faceValue = c => 1 + FACES.indexOf(c);       // contribution to digit-sum
+
+function permIdx(n){
+  const res=[], used=Array(n).fill(false), cur=[];
+  (function rec(){
+    if(cur.length===n){ res.push(cur.slice()); return; }
+    for(let i=0;i<n;i++) if(!used[i]){ used[i]=true; cur.push(i); rec(); cur.pop(); used[i]=false; }
+  })();
+  return res;
+}
+// largest prime among all permutations of a 4-card hand
+function bestPrime(hand){
+  let best = -1, label = null;
+  for(const p of permIdx(hand.length)){
+    const val = parseInt(p.map(i => toDigits(hand[i])).join(""), 10);
+    if(val > best && isPrime(val)){ best = val; label = p.map(i=>hand[i]).join(""); }
+  }
+  return best < 0 ? {none:true} : {none:false, value:best, label};
+}
+const cardValue = c => FACES.includes(c) ? 10 + FACES.indexOf(c) : Number(c);
+const isMult2or5 = c => { const v = cardValue(c); return v % 2 === 0 || v % 5 === 0; };
+
+// draw 2 number cards from a pool of two-each 1..9. Redraw while EITHER:
+//  (A) the hand's digit sum is divisible by 3   (every arrangement ÷ 3), or
+//  (B) all four cards are multiples of 2 or 5    (every arrangement ÷ 2 or ÷ 5)
+// — both guarantee no prime exists, so we keep only hands that could yield one.
+function drawNumberCards(fcmd3, fc){
+  while(true){
+    const pool=[];
+    for(let v=1; v<=9; v++){ pool.push(String(v)); pool.push(String(v)); }
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    const nc = [pool[0], pool[1]];
+    const num = parseInt(nc.join(""), 10);
+    if(((num + fcmd3) % 3) === 0) continue;            // (A)
+    if([...nc, ...fc].every(isMult2or5)) continue;     // (B)
+    return nc;
+  }
+}
+
+/* ---------- card rendering ---------- */
+const SUITS = ["♠","♥","♣","♦"];
+const rankText = c => c === "T" ? "10" : c;        // real cards show "10" for the ten
+function suitFor(idx){ return SUITS[idx % 4]; }
+function isRed(suit){ return suit === "♥" || suit === "♦"; }
+
+function makeCard(label, suit, {clickable=false, used=false, showKey=false} = {}){
+  const el = document.createElement(clickable ? "button" : "div");
+  el.className = "card" + (isRed(suit) ? " red" : "") + (clickable ? "" : " static") + (used ? " used" : "");
+  el.innerHTML =
+    `<span class="rank">${rankText(label)}</span>` +
+    `<span class="center">${suit}</span>` +
+    (showKey ? `<span class="keycap">${label}</span>` : "") +
+    `<span class="rank br">${rankText(label)}</span>`;
+  return el;
+}
+
+/* ---------- game state ---------- */
+const $ = id => document.getElementById(id);
+let fc = [];          // the two fixed face cards
+let fcmd3 = 0;
+let round = 0, score = 0;
+let hand = [], suits = [], answer = null, arrangement = [], answered = false;
+
+/* ===== SETUP ===== */
+const picker = $("picker"), fcInput = $("fcInput"), startBtn = $("startBtn");
+FACES.forEach(f=>{
+  const b = document.createElement("button");
+  b.className = "fc-btn";
+  b.innerHTML = `<span class="pip">♥</span>${f}`;
+  b.title = `${f} = ${10 + FACES.indexOf(f)}`;
+  b.onclick = ()=>{ if(fcInput.value.length < 2){ fcInput.value += f; syncFc(); } fcInput.focus(); };
+  picker.appendChild(b);
+});
+function syncFc(){
+  let v = fcInput.value.toUpperCase().replace(/[^TJQK]/g,"").slice(0,2);
+  fcInput.value = v;
+  startBtn.disabled = v.length !== 2;
+}
+fcInput.addEventListener("input", syncFc);
+fcInput.addEventListener("keydown", e=>{ if(e.key === "Enter" && !startBtn.disabled) startBtn.click(); });
+$("clearFc").onclick = ()=>{ fcInput.value=""; syncFc(); fcInput.focus(); };
+startBtn.onclick = ()=>{
+  fc = fcInput.value.split("");
+  fcmd3 = (faceValue(fc[0]) + faceValue(fc[1])) % 3;
+  $("footFc").textContent = fc.join(" · ");
+  round = 0; score = 0;
+  show("game");
+  nextRound();
+};
+
+/* ===== ROUND FLOW ===== */
+function nextRound(){
+  round++;
+  answered = false;
+  arrangement = [];
+  const nc = drawNumberCards(fcmd3, fc);
+  const numSorted  = [...nc].sort((a,b)=>Number(a)-Number(b));
+  const faceSorted = [...fc].sort((a,b)=>FACES.indexOf(a)-FACES.indexOf(b));
+  hand  = [...numSorted, ...faceSorted];
+  suits = hand.map((_,i)=>suitFor(i));
+  answer = bestPrime(hand);
+
+  // header
+  $("rNow").textContent = round;
+  $("scoreNow").textContent = score;
+  $("progFill").style.width = ((round-1)/20*100) + "%";
+  $("handLabel").textContent = numSorted.join("") + faceSorted.join("");
+
+  // hand row
+  const handRow = $("handRow"); handRow.innerHTML = "";
+  hand.forEach((label,i)=>{
+    const c = makeCard(label, suits[i], {clickable:true, showKey:true});
+    c.dataset.idx = i;
+    c.setAttribute("aria-label", `${rankText(label)} を並べる`);
+    c.onclick = ()=> placeCard(i);
+    handRow.appendChild(c);
+  });
+
+  // reset feedback + controls
+  const fb = $("feedback"); fb.className = "feedback";
+  $("submitBtn").disabled = true;
+  ["undoBtn","resetBtn","noneBtn","submitBtn"].forEach(id=>$(id).disabled=false);
+  renderSlots();
+}
+
+function placeCard(i){
+  if(answered || arrangement.includes(i)) return;
+  arrangement.push(i);
+  renderSlots();
+}
+function renderSlots(){
+  const slots = $("slots"); slots.innerHTML = "";
+  for(let s=0; s<4; s++){
+    if(s < arrangement.length){
+      const i = arrangement[s];
+      slots.appendChild(makeCard(hand[i], suits[i], {clickable:false}));
+    }else{
+      const e = document.createElement("div");
+      e.className = "slot-empty"; e.textContent = "·";
+      slots.appendChild(e);
+    }
+  }
+  // grey out used hand cards
+  document.querySelectorAll("#handRow .card").forEach(c=>{
+    c.classList.toggle("used", arrangement.includes(+c.dataset.idx));
+  });
+  // readout
+  const ro = $("readout");
+  if(arrangement.length === 0){
+    ro.className = "readout empty"; ro.textContent = "札を並べてください";
+  }else{
+    const labels = arrangement.map(i=>rankText(hand[i])).join(" ");
+    const val = arrangement.map(i=>toDigits(hand[i])).join("");
+    ro.className = "readout";
+    ro.innerHTML = `${labels} <span class="eq">=</span> ${val}`;
+  }
+  $("submitBtn").disabled = arrangement.length !== 4;
+}
+
+$("undoBtn").onclick  = ()=>{ if(!answered){ arrangement.pop(); renderSlots(); } };
+$("resetBtn").onclick = ()=>{ if(!answered){ arrangement = []; renderSlots(); } };
+$("submitBtn").onclick = ()=>{
+  if(answered || arrangement.length !== 4) return;
+  const val = parseInt(arrangement.map(i=>toDigits(hand[i])).join(""), 10);
+  finish(!answer.none && val === answer.value);
+};
+$("noneBtn").onclick = ()=>{ if(!answered) finish(answer.none === true); };
+
+function finish(correct){
+  answered = true;
+  if(correct) score++;
+  $("scoreNow").textContent = score;
+  ["submitBtn","undoBtn","resetBtn","noneBtn"].forEach(id=>$(id).disabled=true);
+
+  const fb = $("feedback"), verdict = $("verdict"), reveal = $("reveal");
+  fb.className = "feedback show " + (correct ? "correct" : "wrong");
+  verdict.className = "verdict " + (correct ? "correct" : "wrong");
+  verdict.textContent = correct ? "CORRECT!!" : "FALSE!";
+
+  if(answer.none){
+    reveal.innerHTML = "この手札で作れる素数はありませんでした。正解は <span class='val'>素数なし</span>。";
+  }else{
+    const labels = answer.label.split("").map(rankText).join(" ");
+    reveal.innerHTML = `最大の素数は <span class='val'>${labels} = ${answer.value}</span>。`;
+  }
+  $("nextBtn").textContent = round >= 20 ? "結果を見る →" : "次のラウンド →";
+  fb.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+$("nextBtn").onclick = ()=>{
+  if(round >= 20) showResults();
+  else nextRound();
+};
+
+/* ===== RESULTS ===== */
+function showResults(){
+  $("progFill").style.width = "100%";
+  $("finalScore").textContent = score;
+  $("finalScore2").textContent = score;
+  const pct = score/20;
+  let g;
+  if(score === 20) g = "PERFECT — 完全制覇";
+  else if(pct >= 0.8) g = "素数マスター";
+  else if(pct >= 0.5) g = "なかなかの目利き";
+  else if(pct >= 0.25) g = "まだまだ伸びしろあり";
+  else g = "素数と友達になろう";
+  $("grade").textContent = g;
+  show("results");
+}
+$("againSame").onclick = ()=>{ round=0; score=0; show("game"); nextRound(); };
+$("againNew").onclick  = ()=>{ show("setup"); fcInput.focus(); };
+
+/* ===== view switch ===== */
+let currentView = "setup";
+function show(name){
+  currentView = name;
+  ["setup","game","results"].forEach(s=> $(s).classList.toggle("hidden", s !== name));
+  window.scrollTo({top:0, behavior:"smooth"});
+  if(name === "setup") setTimeout(()=>fcInput.focus(), 60);
+}
+
+/* ===== keyboard control for the arrangement ===== */
+document.addEventListener("keydown", e=>{
+  if(currentView !== "game") return;
+  if(answered){
+    if(e.key === "Enter"){ e.preventDefault(); $("nextBtn").click(); }
+    return;
+  }
+  if(e.key === "Backspace"){ e.preventDefault(); $("undoBtn").click(); return; }
+  if(e.key === "Escape"){    e.preventDefault(); $("resetBtn").click(); return; }
+  if(e.key === "Enter"){ if(arrangement.length === 4){ e.preventDefault(); $("submitBtn").click(); } return; }
+  const k = e.key.toUpperCase();
+  if(k === "0"){ e.preventDefault(); $("noneBtn").click(); return; }
+  if("123456789".includes(k) || FACES.includes(k)){        // place the matching card
+    const i = hand.findIndex((c, idx) => c === k && !arrangement.includes(idx));
+    if(i !== -1){ e.preventDefault(); placeCard(i); }
+  }
+});
+
+syncFc();
+fcInput.focus();
+</script>
+</body>
+</html>
